@@ -1,4 +1,4 @@
-use capnp_serde::converter::{CapnpSerdeBuilder, CapnpSerdeReader};
+use capnp_serde::{CapnpSerdeBuilder, CapnpSerdeReader};
 
 mod schemas {
     pub mod example_capnp {
