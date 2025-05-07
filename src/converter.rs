@@ -1,4 +1,4 @@
-use std::sync::LazyLock;
+use std::{marker::PhantomData, sync::LazyLock};
 
 use capnp::{
     dynamic_value,
@@ -7,6 +7,7 @@ use capnp::{
     schema::{EnumSchema, StructSchema},
     traits::Owned,
 };
+use num_traits::NumCast;
 use once_map::OnceMap;
 use serde::{
     de::{DeserializeSeed, MapAccess, SeqAccess, Unexpected, Visitor},
@@ -417,19 +418,6 @@ impl<'a, 'de> Visitor<'de> for StructSeed<'a> {
         }
         Ok(())
     }
-    fn visit_u16<E>(self, v: u16) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        trace!("CapnpSerdeVisitor::visit_u16 {v:?}");
-        // if let Err(err) = self
-        //     .builder
-        //     .set(self.field, dynamic_value::Reader::UInt16(v))
-        // {
-        //     return Err(serde::de::Error::custom(err));
-        // }
-        Ok(())
-    }
 }
 
 // Sequences only know their length at deserialization time, so we have to delay
@@ -564,6 +552,184 @@ where
     }
 }
 
+struct CapnpSerdeNumVisitor<N, R, F> {
+    setter: F,
+    _marker: PhantomData<(N, R)>,
+}
+
+impl<N, R, F> CapnpSerdeNumVisitor<N, R, F> {
+    fn new(setter: F) -> Self {
+        Self {
+            setter,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<'de, N, R, F> Visitor<'de> for CapnpSerdeNumVisitor<N, R, F>
+where
+    N: NumCast,
+    F: FnOnce(Option<N>) -> R,
+{
+    type Value = R;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(formatter, "{}", std::any::type_name::<N>())
+    }
+
+    fn visit_u8<E>(self, v: u8) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        trace!("CapnpSerdeNumVisitor::visit_u8 {v:?}");
+        Ok((self.setter)(N::from(v)))
+    }
+
+    fn visit_u16<E>(self, v: u16) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        trace!("CapnpSerdeNumVisitor::visit_u16 {v:?}");
+        Ok((self.setter)(N::from(v)))
+    }
+
+    fn visit_u32<E>(self, v: u32) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        trace!("CapnpSerdeNumVisitor::visit_u32 {v:?}");
+        Ok((self.setter)(N::from(v)))
+    }
+
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        trace!("CapnpSerdeNumVisitor::visit_u64 {v:?}");
+        Ok((self.setter)(N::from(v)))
+    }
+
+    fn visit_u128<E>(self, v: u128) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        trace!("CapnpSerdeNumVisitor::visit_u128 {v:?}");
+        Ok((self.setter)(N::from(v)))
+    }
+
+    fn visit_i8<E>(self, v: i8) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        trace!("CapnpSerdeNumVisitor::visit_i8 {v:?}");
+        Ok((self.setter)(N::from(v)))
+    }
+
+    fn visit_i16<E>(self, v: i16) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        trace!("CapnpSerdeNumVisitor::visit_i16 {v:?}");
+        Ok((self.setter)(N::from(v)))
+    }
+
+    fn visit_i32<E>(self, v: i32) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        trace!("CapnpSerdeNumVisitor::visit_i32 {v:?}");
+        Ok((self.setter)(N::from(v)))
+    }
+
+    fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        trace!("CapnpSerdeNumVisitor::visit_i64 {v:?}");
+        Ok((self.setter)(N::from(v)))
+    }
+
+    fn visit_i128<E>(self, v: i128) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        trace!("CapnpSerdeNumVisitor::visit_i128 {v:?}");
+        Ok((self.setter)(N::from(v)))
+    }
+
+    fn visit_f32<E>(self, v: f32) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        trace!("CapnpSerdeNumVisitor::visit_f32 {v:?}");
+        Ok((self.setter)(N::from(v)))
+    }
+
+    fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        trace!("CapnpSerdeNumVisitor::visit_f64 {v:?}");
+        Ok((self.setter)(N::from(v)))
+    }
+}
+
+struct CapnpSerdeBoolVisitor<F> {
+    setter: F,
+}
+
+impl<F> CapnpSerdeBoolVisitor<F> {
+    fn new(setter: F) -> Self {
+        Self { setter }
+    }
+}
+
+impl<'de, F, R> Visitor<'de> for CapnpSerdeBoolVisitor<F>
+where
+    F: FnOnce(bool) -> R,
+{
+    type Value = R;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(formatter, "bool")
+    }
+
+    fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok((self.setter)(v))
+    }
+}
+
+struct CapnpSerdeVoidVisitor<F> {
+    setter: F,
+}
+
+impl<F> CapnpSerdeVoidVisitor<F> {
+    fn new(setter: F) -> Self {
+        Self { setter }
+    }
+}
+
+impl<'de, F, R> Visitor<'de> for CapnpSerdeVoidVisitor<F>
+where
+    F: FnOnce() -> R,
+{
+    type Value = R;
+
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(formatter, "void")
+    }
+
+    fn visit_unit<E>(self) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok((self.setter)())
+    }
+}
+
 struct CapnpSerdeElementSeed<'a> {
     list_builder: capnp::dynamic_list::Builder<'a>,
     index: u32,
@@ -622,8 +788,135 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut CapnpSerdeElementSeed<'a> {
                     })?
                     .map_err(serde::de::Error::custom)?;
             }
-            _ => {
-                trace!("CapnpSerdeElementSeed::deserialize other");
+            TypeVariant::Bool => {
+                deserializer
+                    .deserialize_bool(CapnpSerdeBoolVisitor::new(|b| {
+                        self.list_builder
+                            .set(self.index, dynamic_value::Reader::Bool(b))
+                    }))?
+                    .map_err(serde::de::Error::custom)?;
+            }
+            TypeVariant::Int8 => {
+                deserializer
+                    .deserialize_i8(CapnpSerdeNumVisitor::new(|num| {
+                        if let Some(num) = num {
+                            self.list_builder
+                                .set(self.index, dynamic_value::Reader::Int8(num))
+                        } else {
+                            Ok(())
+                        }
+                    }))?
+                    .map_err(serde::de::Error::custom)?;
+            }
+            TypeVariant::Int16 => {
+                deserializer
+                    .deserialize_i16(CapnpSerdeNumVisitor::new(|num| {
+                        if let Some(num) = num {
+                            self.list_builder
+                                .set(self.index, dynamic_value::Reader::Int16(num))
+                        } else {
+                            Ok(())
+                        }
+                    }))?
+                    .map_err(serde::de::Error::custom)?;
+            }
+            TypeVariant::Int32 => {
+                deserializer
+                    .deserialize_i32(CapnpSerdeNumVisitor::new(|num| {
+                        if let Some(num) = num {
+                            self.list_builder
+                                .set(self.index, dynamic_value::Reader::Int32(num))
+                        } else {
+                            Ok(())
+                        }
+                    }))?
+                    .map_err(serde::de::Error::custom)?;
+            }
+            TypeVariant::Int64 => {
+                deserializer
+                    .deserialize_i64(CapnpSerdeNumVisitor::new(|num| {
+                        if let Some(num) = num {
+                            self.list_builder
+                                .set(self.index, dynamic_value::Reader::Int64(num))
+                        } else {
+                            Ok(())
+                        }
+                    }))?
+                    .map_err(serde::de::Error::custom)?;
+            }
+            TypeVariant::UInt8 => {
+                deserializer
+                    .deserialize_u8(CapnpSerdeNumVisitor::new(|num| {
+                        if let Some(num) = num {
+                            self.list_builder
+                                .set(self.index, dynamic_value::Reader::UInt8(num))
+                        } else {
+                            Ok(())
+                        }
+                    }))?
+                    .map_err(serde::de::Error::custom)?;
+            }
+            TypeVariant::UInt16 => {
+                deserializer
+                    .deserialize_u16(CapnpSerdeNumVisitor::new(|num| {
+                        if let Some(num) = num {
+                            self.list_builder
+                                .set(self.index, dynamic_value::Reader::UInt16(num))
+                        } else {
+                            Ok(())
+                        }
+                    }))?
+                    .map_err(serde::de::Error::custom)?;
+            }
+            TypeVariant::UInt32 => {
+                deserializer
+                    .deserialize_u32(CapnpSerdeNumVisitor::new(|num| {
+                        if let Some(num) = num {
+                            self.list_builder
+                                .set(self.index, dynamic_value::Reader::UInt32(num))
+                        } else {
+                            Ok(())
+                        }
+                    }))?
+                    .map_err(serde::de::Error::custom)?;
+            }
+            TypeVariant::UInt64 => {
+                deserializer
+                    .deserialize_u64(CapnpSerdeNumVisitor::new(|num| {
+                        if let Some(num) = num {
+                            self.list_builder
+                                .set(self.index, dynamic_value::Reader::UInt64(num))
+                        } else {
+                            Ok(())
+                        }
+                    }))?
+                    .map_err(serde::de::Error::custom)?;
+            }
+            TypeVariant::Float32 => {
+                deserializer
+                    .deserialize_f32(CapnpSerdeNumVisitor::new(|num| {
+                        if let Some(num) = num {
+                            self.list_builder
+                                .set(self.index, dynamic_value::Reader::Float32(num))
+                        } else {
+                            Ok(())
+                        }
+                    }))?
+                    .map_err(serde::de::Error::custom)?;
+            }
+            TypeVariant::Float64 => {
+                deserializer
+                    .deserialize_f64(CapnpSerdeNumVisitor::new(|num| {
+                        if let Some(num) = num {
+                            self.list_builder
+                                .set(self.index, dynamic_value::Reader::Float64(num))
+                        } else {
+                            Ok(())
+                        }
+                    }))?
+                    .map_err(serde::de::Error::custom)?;
+            }
+            TypeVariant::Struct(_) => {
                 let seed = StructSeed {
                     builder: self
                         .list_builder
@@ -634,6 +927,17 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut CapnpSerdeElementSeed<'a> {
                 };
                 seed.deserialize(deserializer)?;
             }
+            TypeVariant::Void => {
+                deserializer
+                    .deserialize_unit(CapnpSerdeVoidVisitor::new(|| {
+                        self.list_builder
+                            .set(self.index, dynamic_value::Reader::Void)
+                    }))?
+                    .map_err(serde::de::Error::custom)?;
+            }
+            TypeVariant::Enum(_) => todo!(),
+            TypeVariant::AnyPointer => unimplemented!(),
+            TypeVariant::Capability => unimplemented!(),
         }
 
         Ok(())
