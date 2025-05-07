@@ -25,6 +25,17 @@ fn main() {
     for i in 0..10 {
         list_g.set(i as u32, i * 5);
     }
+    let mut list_h = root.reborrow().init_h(3);
+    for i in 0..3 {
+        let mut entry = list_h.reborrow().get(i);
+        entry.set_a(i);
+        entry.set_b(i % 2 == 0);
+    }
+    root.set_i(schemas::example_capnp::Foo::A);
+    let mut list_j = root.reborrow().init_j(3);
+    list_j.set(0, schemas::example_capnp::Foo::C);
+    list_j.set(1, schemas::example_capnp::Foo::B);
+    list_j.set(2, schemas::example_capnp::Foo::A);
 
     let root_reader = root.into_reader();
     println!("Original message:\n{:?}\n", root_reader);

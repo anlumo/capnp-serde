@@ -5,6 +5,7 @@ use once_map::OnceMap;
 
 pub(crate) mod bools;
 pub(crate) mod data;
+pub(crate) mod enums;
 pub(crate) mod list_element;
 pub(crate) mod num;
 pub(crate) mod seq;

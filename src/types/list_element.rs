@@ -1,6 +1,12 @@
-use capnp::{dynamic_value, introspect::TypeVariant};
+use capnp::{
+    dynamic_value::{self, Enum},
+    introspect::TypeVariant,
+    schema::EnumSchema,
+};
 use serde::de::DeserializeSeed;
 use tracing::trace;
+
+use crate::types::{STRUCT_ENUM_SCHEMA_FIELD_NAMES, enums::EnumVisitor};
 
 use super::{
     bools::BoolVisitor, data::DataVisitor, num::NumVisitor, seq::SeqVisitor,
@@ -208,7 +214,35 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                     }))?
                     .map_err(serde::de::Error::custom)?;
             }
-            TypeVariant::Enum(_) => todo!(),
+            TypeVariant::Enum(raw_schema) => {
+                let schema = EnumSchema::new(raw_schema);
+                let proto = schema.get_proto();
+                let enumerant_names = STRUCT_ENUM_SCHEMA_FIELD_NAMES.insert(proto.get_id(), |_| {
+                    let enumerants = schema.get_enumerants().unwrap();
+                    enumerants
+                        .iter()
+                        .map(|enumerant| {
+                            enumerant.get_proto().get_name().unwrap().to_str().unwrap()
+                        })
+                        .collect::<Box<_>>()
+                });
+
+                deserializer
+                    .deserialize_enum(
+                        proto.get_display_name().unwrap().to_str().unwrap(),
+                        enumerant_names,
+                        EnumVisitor::new(schema, |enumerant| {
+                            self.list_builder.set(
+                                self.index,
+                                dynamic_value::Reader::Enum(Enum::new(
+                                    enumerant.get_ordinal(),
+                                    schema,
+                                )),
+                            )
+                        }),
+                    )?
+                    .map_err(serde::de::Error::custom)?;
+            }
             TypeVariant::AnyPointer => unimplemented!(),
             TypeVariant::Capability => unimplemented!(),
         }

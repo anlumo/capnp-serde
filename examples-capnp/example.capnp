@@ -11,6 +11,13 @@ struct Nested {
     c @2 :Text;
 }
 
+enum Foo {
+    a @0;
+    b @1;
+    c @2;
+    d @3;
+}
+
 struct Complex {
     a @0 :Data;
     b @1 :Text;
@@ -20,5 +27,8 @@ struct Complex {
     }
     f @4 :List(Text);
     g @5 :List(UInt16);
+    h @6 :List(Basic);
+    i @7 :Foo;
+    j @8 :List(Foo);
 }
-# TODO: lists, enums, unions
+# TODO: unions

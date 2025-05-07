@@ -6,6 +6,8 @@ use capnp::{
 use serde::de::{DeserializeSeed, MapAccess, Unexpected, Visitor};
 use tracing::trace;
 
+use crate::types::enums::EnumVisitor;
+
 use super::{
     STRUCT_ENUM_SCHEMA_FIELD_NAMES, dynamic_value_type_to_str, seq::SeqVisitor, type_variant_to_str,
 };
@@ -62,25 +64,7 @@ impl<'a, 'de> DeserializeSeed<'de> for StructVisitor<'a> {
                 )?;
             }
             TypeVariant::List(_) => deserializer.deserialize_seq(self)?,
-            TypeVariant::Enum(raw_enum_schema) => {
-                let schema = EnumSchema::new(raw_enum_schema);
-                let proto = schema.get_proto();
-                let enumerant_names = STRUCT_ENUM_SCHEMA_FIELD_NAMES.insert(proto.get_id(), |_| {
-                    let enumerants = schema.get_enumerants().unwrap();
-                    enumerants
-                        .iter()
-                        .map(|enumerant| {
-                            enumerant.get_proto().get_name().unwrap().to_str().unwrap()
-                        })
-                        .collect::<Box<_>>()
-                });
-
-                deserializer.deserialize_enum(
-                    proto.get_display_name().unwrap().to_str().unwrap(),
-                    enumerant_names,
-                    self,
-                )?
-            }
+            TypeVariant::Enum(_) => unimplemented!(),
             TypeVariant::AnyPointer => unimplemented!(),
             TypeVariant::Capability => unimplemented!(),
         }
@@ -251,15 +235,16 @@ impl<'a, 'de> Visitor<'de> for StructVisitor<'a> {
                 }
                 TypeVariant::Enum(raw_schema) => {
                     let schema = EnumSchema::new(raw_schema);
-                    if let Err(err) = struct_builder.set(
-                        field,
-                        dynamic_value::Reader::Enum(capnp::dynamic_value::Enum::new(
-                            map.next_value()?,
-                            schema,
-                        )),
-                    ) {
-                        return Err(serde::de::Error::custom(err));
-                    }
+                    map.next_value_seed(EnumVisitor::new(schema, |enumerant| {
+                        struct_builder.set(
+                            field,
+                            dynamic_value::Reader::Enum(capnp::dynamic_value::Enum::new(
+                                enumerant.get_ordinal(),
+                                schema,
+                            )),
+                        )
+                    }))?
+                    .map_err(serde::de::Error::custom)?;
                 }
                 TypeVariant::Struct(_) => {
                     let builder = struct_builder
