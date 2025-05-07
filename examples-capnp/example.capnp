@@ -31,4 +31,16 @@ struct Complex {
     i @7 :Foo;
     j @8 :List(Foo);
 }
-# TODO: unions
+
+struct Unions {
+    named :union {
+        a @0 :UInt32;
+        b @1 :Void;
+        c @2 :Basic;
+    }
+    union {
+        d @3 :UInt32;
+        e @4 :Void;
+        f @5 :Basic;
+    }
+}
