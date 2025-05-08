@@ -1,6 +1,6 @@
 # capnp-serde
 
-A library for serializing and deserializing [Cap'n Proto](https://capnproto.org/) messages with Serde. It relies on the [capnp](https://github.com/capnproto/capnproto-rust) crate.
+A library for serializing and deserializing [Cap'n Proto](https://capnproto.org/) messages with Serde. It relies on the [capnp](https://github.com/capnproto/capnproto-rust) crate. Note that it does *not* use the Cap'n Proto message encoding, this crate is for serializing using *another* format.
 
 ## Use Case
 
