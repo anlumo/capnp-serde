@@ -65,3 +65,15 @@ where
         Ok(instance)
     }
 }
+
+impl<O: Owned> AsRef<capnp::message::TypedBuilder<O>> for CapnpSerdeBuilder<O> {
+    fn as_ref(&self) -> &capnp::message::TypedBuilder<O> {
+        &self.message
+    }
+}
+
+impl<O: Owned> AsMut<capnp::message::TypedBuilder<O>> for CapnpSerdeBuilder<O> {
+    fn as_mut(&mut self) -> &mut capnp::message::TypedBuilder<O> {
+        &mut self.message
+    }
+}
