@@ -25,8 +25,12 @@ fn main() {
         serde_json::to_string(&serde_reader).expect("Failed to serialize to JSON")
     );
     println!(
-        "YAML:\n{}\n",
+        "YAML:\n{}",
         serde_yml::to_string(&serde_reader).expect("Failed to serialize to YAML")
+    );
+    println!(
+        "MessagePack:\n{:x?}\n",
+        rmp_serde::to_vec(&serde_reader).expect("Failed to serialize to MessagePack")
     );
 
     let json = serde_json::to_vec(&serde_reader).expect("Failed to serialize to JSON");
@@ -34,7 +38,17 @@ fn main() {
         serde_json::from_slice(&json).expect("Failed to deserialize from JSON");
 
     println!(
-        "Deserialized message:\n{:?}\n",
+        "Deserialized message via JSON:\n{:?}\n",
+        back_message.into_inner().get_root().unwrap().into_reader()
+    );
+
+    let messagepack_msg =
+        rmp_serde::to_vec(&serde_reader).expect("Failed to serialize to MessagePack");
+    let back_message: CapnpSerdeBuilder<schemas::example_capnp::unions::Owned> =
+        rmp_serde::from_slice(&messagepack_msg).expect("Failed to deserialize from MessagePack");
+
+    println!(
+        "Deserialized message via MessagePack:\n{:?}\n",
         back_message.into_inner().get_root().unwrap().into_reader()
     );
 }

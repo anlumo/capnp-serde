@@ -24,8 +24,12 @@ fn main() {
         serde_json::to_string(&serde_reader).expect("Failed to serialize to JSON")
     );
     println!(
-        "YAML:\n{}\n",
+        "YAML:\n{}",
         serde_yml::to_string(&serde_reader).expect("Failed to serialize to YAML")
+    );
+    println!(
+        "MessagePack:\n{:x?}\n",
+        rmp_serde::to_vec(&serde_reader).expect("Failed to serialize to MessagePack")
     );
 
     let json = serde_json::to_vec(&serde_reader).expect("Failed to serialize to JSON");

@@ -51,6 +51,9 @@ fn main() {
         serde_json::to_string(&serde_reader).expect("Failed to serialize to JSON")
     );
     // YAML not possible because it doesn't support binary data
+    let messagepack_msg =
+        rmp_serde::to_vec(&serde_reader).expect("Failed to serialize to MessagePack");
+    println!("MessagePack:\n{messagepack_msg:x?}\n",);
 
     let mut cbor = Vec::new();
     ciborium::into_writer(&serde_reader, &mut cbor).expect("Failed to serialize to CBOR");
@@ -61,7 +64,14 @@ fn main() {
         ciborium::from_reader(cbor.as_slice()).expect("Failed to deserialize from CBOR");
 
     println!(
-        "Deserialized message:\n{:?}\n",
+        "Deserialized message via CBOR:\n{:?}\n",
+        back_message.into_inner().get_root().unwrap().into_reader()
+    );
+
+    let back_message: CapnpSerdeBuilder<schemas::example_capnp::complex::Owned> =
+        rmp_serde::from_slice(&messagepack_msg).expect("Failed to deserialize from MessagePack");
+    println!(
+        "Deserialized message via MessagePack:\n{:?}\n",
         back_message.into_inner().get_root().unwrap().into_reader()
     );
 }
