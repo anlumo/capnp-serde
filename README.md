@@ -8,6 +8,8 @@ This crate allows directly converting Cap'n Proto messages to and from another s
 
 The reason I created this is to two-way translate Cap'n Proto messages for languages that don't have Cap'n Proto support themselves (like Dart in my case, via [flutter_rust_bridge](https://github.com/fzyzcjy/flutter_rust_bridge/), but [serde-wasm-bindgen](https://github.com/RReverser/serde-wasm-bindgen) is also a good use case). The crate can easily convert anything to some common schemaless codec and do interop that way.
 
+Another use case might be easily debugging complex data structures, for example by converting them to JSON to investigate in a JSON viewer. Also, it's quite easy to quickly construct a Cap'n Proto message via `serde_json::json!` (much easier than the capnp API!). Look at the [transcode example](examples/transcode.rs) on how to do that.
+
 Note that the Cap'n Proto schema is still required. This crate uses capnp and capnpc like normal, relying on its introspection feature and `capnp::dynamic_value`.
 
 ## Usage
