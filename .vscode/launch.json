@@ -1,0 +1,84 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'basic'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=basic",
+                    "--package=capnp-serde",
+                    "--features=examples"
+                ],
+                "filter": {
+                    "name": "basic",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'complex'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=complex",
+                    "--package=capnp-serde",
+                    "--features=examples"
+                ],
+                "filter": {
+                    "name": "complex",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'nested'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=nested",
+                    "--package=capnp-serde",
+                    "--features=examples"
+                ],
+                "filter": {
+                    "name": "nested",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'unions'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=unions",
+                    "--package=capnp-serde",
+                    "--features=examples"
+                ],
+                "filter": {
+                    "name": "unions",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
