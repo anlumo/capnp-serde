@@ -61,6 +61,11 @@ impl serde::ser::Serialize for CapnpSerdeReader<'_> {
                     .get_schema()
                     .get_fields()
                     .map_err(SerdeError::custom)?;
+                // This filter excludes fields with their default value set and non-active union fields
+                let fields: Box<[_]> = fields
+                    .into_iter()
+                    .filter(|&field| reader.has(field).unwrap_or_default())
+                    .collect();
                 let mut map = serializer.serialize_map(Some(fields.len() as _))?;
                 for field in fields {
                     let name = field

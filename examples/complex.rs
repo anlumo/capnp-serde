@@ -7,7 +7,11 @@ mod schemas {
 }
 
 fn main() {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_file(true)
+        .with_line_number(true)
+        .init();
 
     let mut message =
         capnp::message::TypedBuilder::<schemas::example_capnp::complex::Owned>::new_default();

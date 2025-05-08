@@ -4,7 +4,7 @@ use capnp::{
     schema::EnumSchema,
 };
 use serde::de::DeserializeSeed;
-use tracing::trace;
+use tracing::{error, trace};
 
 use crate::types::{STRUCT_ENUM_SCHEMA_FIELD_NAMES, enums::EnumVisitor};
 
@@ -41,7 +41,8 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                         }
                     },
                 };
-                seed.deserialize(deserializer)?;
+                seed.deserialize(deserializer)
+                    .inspect_err(|err| error!("{err}"))?;
             }
             TypeVariant::Text => {
                 let list_builder = self.list_builder.reborrow();
@@ -55,7 +56,9 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
 
                         text_builder.push_str(s);
                         Ok(())
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::Data => {
@@ -64,7 +67,9 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                         self.list_builder
                             .set(self.index, dynamic_value::Reader::Data(s))?;
                         Ok(())
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::Bool => {
@@ -72,7 +77,9 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                     .deserialize_bool(BoolVisitor::new(|b| {
                         self.list_builder
                             .set(self.index, dynamic_value::Reader::Bool(b))
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::Int8 => {
@@ -84,7 +91,9 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                         } else {
                             Ok(())
                         }
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::Int16 => {
@@ -96,7 +105,9 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                         } else {
                             Ok(())
                         }
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::Int32 => {
@@ -108,7 +119,9 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                         } else {
                             Ok(())
                         }
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::Int64 => {
@@ -120,7 +133,9 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                         } else {
                             Ok(())
                         }
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::UInt8 => {
@@ -132,7 +147,9 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                         } else {
                             Ok(())
                         }
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::UInt16 => {
@@ -144,7 +161,9 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                         } else {
                             Ok(())
                         }
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::UInt32 => {
@@ -156,7 +175,9 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                         } else {
                             Ok(())
                         }
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::UInt64 => {
@@ -168,7 +189,9 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                         } else {
                             Ok(())
                         }
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::Float32 => {
@@ -180,7 +203,9 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                         } else {
                             Ok(())
                         }
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::Float64 => {
@@ -192,7 +217,9 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                         } else {
                             Ok(())
                         }
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::Struct(_) => {
@@ -201,17 +228,21 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                         .list_builder
                         .reborrow()
                         .get(self.index)
+                        .inspect_err(|err| error!("{err}"))
                         .map_err(serde::de::Error::custom)?,
                     ty: self.ty,
                 };
-                seed.deserialize(deserializer)?;
+                seed.deserialize(deserializer)
+                    .inspect_err(|err| error!("{err}"))?;
             }
             TypeVariant::Void => {
                 deserializer
                     .deserialize_unit(VoidVisitor::new(|| {
                         self.list_builder
                             .set(self.index, dynamic_value::Reader::Void)
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::Enum(raw_schema) => {
@@ -240,7 +271,9 @@ impl<'a, 'de> DeserializeSeed<'de> for &mut ElementSeed<'a> {
                                 )),
                             )
                         }),
-                    )?
+                    )
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
             }
             TypeVariant::AnyPointer => unimplemented!(),

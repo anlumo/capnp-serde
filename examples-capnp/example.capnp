@@ -30,6 +30,8 @@ struct Complex {
     h @6 :List(Basic);
     i @7 :Foo;
     j @8 :List(Foo);
+    shouldbenull @9 :Basic;
+    default @10 :UInt64 = 12;
 }
 
 struct Unions {

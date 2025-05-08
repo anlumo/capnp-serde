@@ -4,7 +4,7 @@ use capnp::{
     schema::{EnumSchema, StructSchema},
 };
 use serde::de::{DeserializeSeed, MapAccess, Unexpected, Visitor};
-use tracing::trace;
+use tracing::{error, trace};
 
 use crate::types::enums::EnumVisitor;
 
@@ -26,18 +26,42 @@ impl<'a, 'de> DeserializeSeed<'de> for StructVisitor<'a> {
     {
         trace!("StructSeed::deserialize {:?}", self.ty);
         match self.ty.which() {
-            TypeVariant::Void => deserializer.deserialize_unit(self)?,
-            TypeVariant::Bool => deserializer.deserialize_bool(self)?,
-            TypeVariant::Int8 => deserializer.deserialize_i8(self)?,
-            TypeVariant::Int16 => deserializer.deserialize_i16(self)?,
-            TypeVariant::Int32 => deserializer.deserialize_i32(self)?,
-            TypeVariant::Int64 => deserializer.deserialize_i64(self)?,
-            TypeVariant::UInt8 => deserializer.deserialize_u8(self)?,
-            TypeVariant::UInt16 => deserializer.deserialize_u16(self)?,
-            TypeVariant::UInt32 => deserializer.deserialize_u32(self)?,
-            TypeVariant::UInt64 => deserializer.deserialize_u64(self)?,
-            TypeVariant::Float32 => deserializer.deserialize_f32(self)?,
-            TypeVariant::Float64 => deserializer.deserialize_f64(self)?,
+            TypeVariant::Void => deserializer
+                .deserialize_unit(self)
+                .inspect_err(|err| error!("{err}"))?,
+            TypeVariant::Bool => deserializer
+                .deserialize_bool(self)
+                .inspect_err(|err| error!("{err}"))?,
+            TypeVariant::Int8 => deserializer
+                .deserialize_i8(self)
+                .inspect_err(|err| error!("{err}"))?,
+            TypeVariant::Int16 => deserializer
+                .deserialize_i16(self)
+                .inspect_err(|err| error!("{err}"))?,
+            TypeVariant::Int32 => deserializer
+                .deserialize_i32(self)
+                .inspect_err(|err| error!("{err}"))?,
+            TypeVariant::Int64 => deserializer
+                .deserialize_i64(self)
+                .inspect_err(|err| error!("{err}"))?,
+            TypeVariant::UInt8 => deserializer
+                .deserialize_u8(self)
+                .inspect_err(|err| error!("{err}"))?,
+            TypeVariant::UInt16 => deserializer
+                .deserialize_u16(self)
+                .inspect_err(|err| error!("{err}"))?,
+            TypeVariant::UInt32 => deserializer
+                .deserialize_u32(self)
+                .inspect_err(|err| error!("{err}"))?,
+            TypeVariant::UInt64 => deserializer
+                .deserialize_u64(self)
+                .inspect_err(|err| error!("{err}"))?,
+            TypeVariant::Float32 => deserializer
+                .deserialize_f32(self)
+                .inspect_err(|err| error!("{err}"))?,
+            TypeVariant::Float64 => deserializer
+                .deserialize_f64(self)
+                .inspect_err(|err| error!("{err}"))?,
             TypeVariant::Text => todo!(),
             TypeVariant::Data => todo!(),
             TypeVariant::Struct(raw_branded_struct_schema) => {
@@ -57,13 +81,17 @@ impl<'a, 'de> DeserializeSeed<'de> for StructVisitor<'a> {
                     field_names
                 );
 
-                deserializer.deserialize_struct(
-                    proto.get_display_name().unwrap().to_str().unwrap(),
-                    field_names,
-                    self,
-                )?;
+                deserializer
+                    .deserialize_struct(
+                        proto.get_display_name().unwrap().to_str().unwrap(),
+                        field_names,
+                        self,
+                    )
+                    .inspect_err(|err| error!("{err}"))?;
             }
-            TypeVariant::List(_) => deserializer.deserialize_seq(self)?,
+            TypeVariant::List(_) => deserializer
+                .deserialize_seq(self)
+                .inspect_err(|err| error!("{err}"))?,
             TypeVariant::Enum(_) => unimplemented!(),
             TypeVariant::AnyPointer => unimplemented!(),
             TypeVariant::Capability => unimplemented!(),
@@ -107,14 +135,21 @@ impl<'a, 'de> Visitor<'de> for StructVisitor<'a> {
         );
 
         loop {
+            trace!("StructSeed::visit_map loop calling next_key");
             let key = match map.next_key::<String>() {
-                Err(err) => return Err(err),
+                Err(err) => {
+                    error!("{err}");
+                    return Err(err);
+                }
                 Ok(None) => break,
                 Ok(Some(key)) => key,
             };
             let field = match schema.get_field_by_name(&key) {
                 Ok(field) => field,
-                Err(err) => return Err(serde::de::Error::custom(err)),
+                Err(err) => {
+                    error!("{err}");
+                    return Err(serde::de::Error::custom(err));
+                }
             };
             trace!(
                 "StructSeed::visit_map key = {key:?}, type = {:?}",
@@ -126,7 +161,9 @@ impl<'a, 'de> Visitor<'de> for StructVisitor<'a> {
                     map.next_value_seed(SeqVisitor {
                         inner_ty,
                         generator: |size| {
-                            let builder = struct_builder.initn(field, size)?;
+                            let builder = struct_builder
+                                .initn(field, size)
+                                .inspect_err(|err| error!("{err}"))?;
                             if let capnp::dynamic_value::Builder::List(list_builder) = builder {
                                 Ok(list_builder)
                             } else {
@@ -140,6 +177,7 @@ impl<'a, 'de> Visitor<'de> for StructVisitor<'a> {
                     let dynamic_value::Builder::Text(mut text_builder) = struct_builder
                         .reborrow()
                         .initn(field, text.len() as u32)
+                        .inspect_err(|err| error!("{err}"))
                         .map_err(serde::de::Error::custom)?
                     else {
                         return Err(serde::de::Error::custom("Internal error"));
@@ -147,9 +185,11 @@ impl<'a, 'de> Visitor<'de> for StructVisitor<'a> {
                     text_builder.push_str(&text);
                 }
                 TypeVariant::Data => {
-                    let bytes: serde_bytes::ByteBuf = map.next_value()?;
+                    let bytes: serde_bytes::ByteBuf =
+                        map.next_value().inspect_err(|err| error!("{err}"))?;
                     if let Err(err) = struct_builder.set(field, dynamic_value::Reader::Data(&bytes))
                     {
+                        error!("{err}");
                         return Err(serde::de::Error::custom(err));
                     }
                 }
@@ -157,79 +197,123 @@ impl<'a, 'de> Visitor<'de> for StructVisitor<'a> {
                     map.next_value::<()>()?; // ignore value
                 }
                 TypeVariant::Bool => {
-                    if let Err(err) =
-                        struct_builder.set(field, dynamic_value::Reader::Bool(map.next_value()?))
-                    {
+                    if let Err(err) = struct_builder.set(
+                        field,
+                        dynamic_value::Reader::Bool(
+                            map.next_value().inspect_err(|err| error!("{err}"))?,
+                        ),
+                    ) {
+                        error!("{err}");
                         return Err(serde::de::Error::custom(err));
                     }
                 }
                 TypeVariant::Int8 => {
-                    if let Err(err) =
-                        struct_builder.set(field, dynamic_value::Reader::Int8(map.next_value()?))
-                    {
+                    if let Err(err) = struct_builder.set(
+                        field,
+                        dynamic_value::Reader::Int8(
+                            map.next_value().inspect_err(|err| error!("{err}"))?,
+                        ),
+                    ) {
+                        error!("{err}");
                         return Err(serde::de::Error::custom(err));
                     }
                 }
                 TypeVariant::Int16 => {
-                    if let Err(err) =
-                        struct_builder.set(field, dynamic_value::Reader::Int16(map.next_value()?))
-                    {
+                    if let Err(err) = struct_builder.set(
+                        field,
+                        dynamic_value::Reader::Int16(
+                            map.next_value().inspect_err(|err| error!("{err}"))?,
+                        ),
+                    ) {
+                        error!("{err}");
                         return Err(serde::de::Error::custom(err));
                     }
                 }
                 TypeVariant::Int32 => {
-                    if let Err(err) =
-                        struct_builder.set(field, dynamic_value::Reader::Int32(map.next_value()?))
-                    {
+                    if let Err(err) = struct_builder.set(
+                        field,
+                        dynamic_value::Reader::Int32(
+                            map.next_value().inspect_err(|err| error!("{err}"))?,
+                        ),
+                    ) {
+                        error!("{err}");
                         return Err(serde::de::Error::custom(err));
                     }
                 }
                 TypeVariant::Int64 => {
-                    if let Err(err) =
-                        struct_builder.set(field, dynamic_value::Reader::Int64(map.next_value()?))
-                    {
+                    if let Err(err) = struct_builder.set(
+                        field,
+                        dynamic_value::Reader::Int64(
+                            map.next_value().inspect_err(|err| error!("{err}"))?,
+                        ),
+                    ) {
+                        error!("{err}");
                         return Err(serde::de::Error::custom(err));
                     }
                 }
                 TypeVariant::UInt8 => {
-                    if let Err(err) =
-                        struct_builder.set(field, dynamic_value::Reader::UInt8(map.next_value()?))
-                    {
+                    if let Err(err) = struct_builder.set(
+                        field,
+                        dynamic_value::Reader::UInt8(
+                            map.next_value().inspect_err(|err| error!("{err}"))?,
+                        ),
+                    ) {
+                        error!("{err}");
                         return Err(serde::de::Error::custom(err));
                     }
                 }
                 TypeVariant::UInt16 => {
-                    if let Err(err) =
-                        struct_builder.set(field, dynamic_value::Reader::UInt16(map.next_value()?))
-                    {
+                    if let Err(err) = struct_builder.set(
+                        field,
+                        dynamic_value::Reader::UInt16(
+                            map.next_value().inspect_err(|err| error!("{err}"))?,
+                        ),
+                    ) {
+                        error!("{err}");
                         return Err(serde::de::Error::custom(err));
                     }
                 }
                 TypeVariant::UInt32 => {
-                    if let Err(err) =
-                        struct_builder.set(field, dynamic_value::Reader::UInt32(map.next_value()?))
-                    {
+                    if let Err(err) = struct_builder.set(
+                        field,
+                        dynamic_value::Reader::UInt32(
+                            map.next_value().inspect_err(|err| error!("{err}"))?,
+                        ),
+                    ) {
+                        error!("{err}");
                         return Err(serde::de::Error::custom(err));
                     }
                 }
                 TypeVariant::UInt64 => {
-                    if let Err(err) =
-                        struct_builder.set(field, dynamic_value::Reader::UInt64(map.next_value()?))
-                    {
+                    if let Err(err) = struct_builder.set(
+                        field,
+                        dynamic_value::Reader::UInt64(
+                            map.next_value().inspect_err(|err| error!("{err}"))?,
+                        ),
+                    ) {
+                        error!("{err}");
                         return Err(serde::de::Error::custom(err));
                     }
                 }
                 TypeVariant::Float32 => {
-                    if let Err(err) =
-                        struct_builder.set(field, dynamic_value::Reader::Float32(map.next_value()?))
-                    {
+                    if let Err(err) = struct_builder.set(
+                        field,
+                        dynamic_value::Reader::Float32(
+                            map.next_value().inspect_err(|err| error!("{err}"))?,
+                        ),
+                    ) {
+                        error!("{err}");
                         return Err(serde::de::Error::custom(err));
                     }
                 }
                 TypeVariant::Float64 => {
-                    if let Err(err) =
-                        struct_builder.set(field, dynamic_value::Reader::Float64(map.next_value()?))
-                    {
+                    if let Err(err) = struct_builder.set(
+                        field,
+                        dynamic_value::Reader::Float64(
+                            map.next_value().inspect_err(|err| error!("{err}"))?,
+                        ),
+                    ) {
+                        error!("{err}");
                         return Err(serde::de::Error::custom(err));
                     }
                 }
@@ -243,13 +327,16 @@ impl<'a, 'de> Visitor<'de> for StructVisitor<'a> {
                                 schema,
                             )),
                         )
-                    }))?
+                    }))
+                    .inspect_err(|err| error!("{err}"))?
+                    .inspect_err(|err| error!("{err}"))
                     .map_err(serde::de::Error::custom)?;
                 }
                 TypeVariant::Struct(_) => {
                     let builder = struct_builder
                         .reborrow()
                         .init(field)
+                        .inspect_err(|err| error!("{err}"))
                         .map_err(serde::de::Error::custom)?;
                     let seed = StructVisitor {
                         builder,

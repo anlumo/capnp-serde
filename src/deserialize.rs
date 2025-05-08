@@ -44,7 +44,8 @@ where
                         builder: builder.into(),
                         ty,
                     };
-                    seed.deserialize(deserializer)?;
+                    seed.deserialize(deserializer)
+                        .inspect_err(|err| tracing::error!("{err}"))?;
                 }
                 TypeVariant::List(inner_ty) => {
                     let seed = SeqVisitor::new(inner_ty, |size| {
@@ -55,7 +56,8 @@ where
                             Err(capnp::Error::failed("Not a list".to_owned()))
                         }
                     });
-                    seed.deserialize(deserializer)?;
+                    seed.deserialize(deserializer)
+                        .inspect_err(|err| tracing::error!("{err}"))?;
                 }
                 _ => unimplemented!(),
             }

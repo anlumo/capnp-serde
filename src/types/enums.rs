@@ -34,6 +34,7 @@ where
         // Cap'n Proto doesn't support data attached to enum variants, so we can
         // ignore that part
         data.variant_seed(self)
+            .inspect_err(|err| tracing::error!("{err}"))
             .map_err(serde::de::Error::custom)
             .map(|(enumerant, _)| enumerant)
     }
@@ -46,6 +47,7 @@ where
         let enumerant = self
             .schema
             .get_enumerants()
+            .inspect_err(|err| tracing::error!("{err}"))
             .map_err(serde::de::Error::custom)?
             .iter()
             .find(|enumerant| enumerant.get_proto().get_name().unwrap().to_str().unwrap() == value)
@@ -62,6 +64,7 @@ where
         let enumerant = self
             .schema
             .get_enumerants()
+            .inspect_err(|err| tracing::error!("{err}"))
             .map_err(serde::de::Error::custom)?
             .iter()
             .find(|enumerant| enumerant.get_proto().get_name().unwrap().to_str().unwrap() == value)
@@ -81,6 +84,8 @@ where
     where
         D: serde::Deserializer<'de>,
     {
-        deserializer.deserialize_identifier(self)
+        deserializer
+            .deserialize_identifier(self)
+            .inspect_err(|err| tracing::error!("{err}"))
     }
 }

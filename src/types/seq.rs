@@ -1,6 +1,6 @@
 use capnp::introspect::TypeVariant;
 use serde::de::{DeserializeSeed, SeqAccess, Visitor};
-use tracing::trace;
+use tracing::{error, trace};
 
 use super::{list_element::ElementSeed, type_variant_to_str};
 
@@ -48,7 +48,10 @@ where
             // The try-operator confuses the borrow checker here, so we can't use it!
             let list_builder = match (self.generator)(size as u32) {
                 Ok(list_builder) => list_builder,
-                Err(err) => return Err(serde::de::Error::custom(err)),
+                Err(err) => {
+                    error!("{err}");
+                    return Err(serde::de::Error::custom(err));
+                }
             };
             let mut index = 0;
             let mut seed = ElementSeed {
@@ -59,7 +62,10 @@ where
             loop {
                 seed.index = index;
                 match seq.next_element_seed(&mut seed) {
-                    Err(err) => return Err(err),
+                    Err(err) => {
+                        error!("{err}");
+                        return Err(err);
+                    }
                     Ok(None) => break,
                     Ok(Some(())) => {
                         index += 1;
@@ -83,7 +89,9 @@ where
     where
         D: serde::Deserializer<'de>,
     {
-        deserializer.deserialize_seq(self)?;
+        deserializer
+            .deserialize_seq(self)
+            .inspect_err(|err| error!("{err}"))?;
         Ok(())
     }
 }
