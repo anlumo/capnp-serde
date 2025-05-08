@@ -9,8 +9,9 @@ mod schemas {
 fn main() {
     tracing_subscriber::fmt::init();
 
-    let mut message = capnp::message::Builder::new_default();
-    let mut root = message.init_root::<schemas::example_capnp::unions::Builder>();
+    let mut message =
+        capnp::message::TypedBuilder::<schemas::example_capnp::unions::Owned>::new_default();
+    let mut root = message.init_root();
     let mut named = root.reborrow().init_named();
     named.set_a(42);
     root.set_d(84);
