@@ -2,12 +2,32 @@ use capnp::dynamic_value;
 use serde::ser::{Error as SerdeError, SerializeMap, SerializeSeq};
 use tracing::trace;
 
+/// A type that can be used to serialize a Cap'n Proto dynamic value into any serde-implementing format.
+///
+/// This can be used to convert a Cap'n Proto message to any format that implements serde, such as JSON, YAML or CBOR.
+///
+/// # Example
+///
+///
+/// ```rust
+/// use capnp_serde::CapnpSerdeReader;
+///
+/// let value = CapnpSerdeReader::from(capnp::dynamic_value::Reader::from(42));
+/// let json = serde_json::to_string(&value).unwrap();
+/// assert_eq!(json, "42");
+/// ```
 #[repr(transparent)]
 pub struct CapnpSerdeReader<'a>(dynamic_value::Reader<'a>);
 
-impl<'a> CapnpSerdeReader<'a> {
-    pub fn new(value: impl Into<dynamic_value::Reader<'a>>) -> Self {
-        Self(value.into())
+impl<'a, R> From<R> for CapnpSerdeReader<'a>
+where
+    dynamic_value::Reader<'a>: From<R>,
+{
+    /// Creates a `CapnpSerdeReader` from a `capnp::dynamic_value::Reader`.
+    ///
+    /// This is the initializer for `CapnpSerdeReader`.
+    fn from(reader: R) -> Self {
+        Self(reader.into())
     }
 }
 

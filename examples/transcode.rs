@@ -35,6 +35,8 @@ fn main() {
 
     println!(
         "Deserialized message:\n{:?}\n",
-        back_message.into_inner().get_root().unwrap().into_reader()
+        capnp::message::TypedBuilder::from(back_message)
+            .get_root_as_reader()
+            .unwrap()
     );
 }

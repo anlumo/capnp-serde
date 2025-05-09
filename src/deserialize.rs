@@ -9,13 +9,25 @@ use tracing::trace;
 
 use crate::types::{seq::SeqVisitor, structs::StructVisitor};
 
+/// A deserialize implementation that can be used to deserialize data encoded in a serde format into a [`TypedBuilder`].
+///
+/// This can be used to convert from any format that implements serde, such as JSON, YAML or CBOR, into a Cap'n Proto message (based on a Cap'n Proto schema).
+///
+/// # Example
+///
+/// ```ignore
+/// use capnp_serde::CapnpSerdeBuilder;
+///
+/// let value = CapnpSerdeBuilder::<my_type::Owned>::deserialize(&serde_json::json!(...)).unwrap();
+/// let reader = capnp::message::TypedBuilder::from(value).get_root_as_reader().unwrap();
+/// ```
 pub struct CapnpSerdeBuilder<O: Owned> {
     message: capnp::message::TypedBuilder<O>,
 }
 
-impl<O: Owned> CapnpSerdeBuilder<O> {
-    pub fn into_inner(self) -> TypedBuilder<O> {
-        self.message
+impl<O: Owned> From<CapnpSerdeBuilder<O>> for TypedBuilder<O> {
+    fn from(builder: CapnpSerdeBuilder<O>) -> Self {
+        builder.message
     }
 }
 

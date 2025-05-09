@@ -44,7 +44,7 @@ fn main() {
     let root_reader = root.into_reader();
     println!("Original message:\n{:?}\n", root_reader);
 
-    let serde_reader = CapnpSerdeReader::new(root_reader);
+    let serde_reader = CapnpSerdeReader::from(root_reader);
 
     println!(
         "JSON:\n{}\n",
@@ -65,13 +65,18 @@ fn main() {
 
     println!(
         "Deserialized message via CBOR:\n{:?}\n",
-        back_message.into_inner().get_root().unwrap().into_reader()
+        capnp::message::TypedBuilder::from(back_message)
+            .get_root()
+            .unwrap()
+            .into_reader()
     );
 
     let back_message: CapnpSerdeBuilder<schemas::example_capnp::complex::Owned> =
         rmp_serde::from_slice(&messagepack_msg).expect("Failed to deserialize from MessagePack");
     println!(
         "Deserialized message via MessagePack:\n{:?}\n",
-        back_message.into_inner().get_root().unwrap().into_reader()
+        capnp::message::TypedBuilder::from(back_message)
+            .get_root_as_reader()
+            .unwrap()
     );
 }
